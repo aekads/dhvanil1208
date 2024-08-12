@@ -479,7 +479,7 @@ const query1 = `
 `;
 
 const updateResult = await db.query(query1, [now]);
-
+console.log('Current timestamp:', now);
 
 
 

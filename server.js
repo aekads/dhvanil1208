@@ -459,7 +459,7 @@ app.get('/admin/logs', dashboardRoutes.isAuthenticated, async (req, res) => {
 
 cron.schedule('* * * * *', async () => {
   // Every minute
-console.log('Running a task every minute');
+
   try {
     const now = new Date();
 
@@ -535,6 +535,7 @@ const updateResult = await db.query(query1, [now]);
         }
       }
      }
+    console.log('Running a task every minute');
   } catch (err) {
     console.error('Error during periodic task:', err);
   }

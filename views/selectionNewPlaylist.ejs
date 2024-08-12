@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link rel="icon" type="image/png" href="https://res.cloudinary.com/dqfnwh89v/image/upload/v1721653535/Aek_Ads_Fevicon_m0qmmj.png">
+  <link rel="stylesheet" href="/css/groupScreen.css" />
+  <style>
+    .goback {
+      padding: 12px 20px;
+      border: 1px solid #0D6EFD;
+      font-weight: 700;
+      color: #0D6EFD;
+      background: transparent;
+    }
+    .goback:hover{
+      background: #0D6EFD;
+color: white;
+    }
+    .header {
+      display: flex;
+      justify-content: flex-end;
+    }
+    button5 {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color:transparent;
+      border: none;
+      color: white;
+      /* display: flex;
+      align-items: center;
+      justify-content: center; */
+      cursor: pointer;
+      font-size: 1.5rem;
+      align-items: center;
+      
+    }
+   
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+  <div class="group">
+    <div class="header">
+      <div class="group-screen-btn">
+        <button class="saveButton" onclick="saveData()">Save</button>
+
+
+        <button onclick="publishPlaylist()">Publish</button>
+      </div>
+    </div>
+    <div class="heading">
+      <h3>Select Screens to Publish Playlist</h3>
+    </div>
+    <div class="selection-screens">
+      <div class="select-screen">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Screen ID</th>                     
+              <th>Screen Name</th>
+              <th>Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (screens && screens.length) { %>
+              <% screens.forEach(screen => { %>
+                <tr>
+                  <td><input type="checkbox" name="checkbox" value="<%= screen.screenid %>" data-screenname="<%= screen.screenname %>" data-address="<%= screen.location %>"/></td>
+                  <td><%= screen.screenid %></td>                 
+                  <td><%= screen.screenname %></td>
+                  <td><%= screen.location %></td>
+             
+
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6">No screens found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="selected-screen">
+        <table>
+          <thead>
+            <tr>
+              <th>Sr No</th>
+              <th>Screen ID</th>           
+              <th>Screen Name</th>
+              <th>Address</th>
+              
+            </tr>
+          </thead>
+          <tbody>
+            <tbody id="selectedScreensTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+ 
+  <script>
+    function goback() {
+          window.history.back();
+    }
+
+    const playlistName = sessionStorage.getItem("playlistName");
+    const playlistDescription = sessionStorage.getItem("playlistDescription");
+    const playlistUrls = sessionStorage.getItem("selectedItems");
+    const layoutData1 = sessionStorage.getItem("layoutData");
+const layoutData= JSON.parse(layoutData1)
+console.log("layoutData",layoutData);
+
+    const urls = JSON.parse(playlistUrls);
+
+    async function publishPlaylist() {
+      const selectedScreens = [];
+      const checkboxes = document.querySelectorAll('input[name="checkbox"]:checked');
+      checkboxes.forEach((checkbox) => {
+        selectedScreens.push(checkbox.value);
+      });
+
+      if (selectedScreens.length === 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Please select at least one screen',
+        });
+        return;
+      }
+
+      try {
+        const response = await fetch("/Dashboard/Playlist/createPlaylist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            screenIDs: selectedScreens,
+            // urls: urls,
+            layoutData,
+            playlistName: playlistName,
+            playlistDescription: playlistDescription,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to create playlist");
+        }
+        const responseData = await response.json();
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Playlist created successfully!',
+        }).then(() => {
+          window.location.href = '/Dashboard/Playlist';
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Failed to create playlist. Please try again.',
+        });
+        console.error("Error creating playlist:", error);
+      }
+    }
+
+    window.publishPlaylist = publishPlaylist;
+
+    // let searchInput = document.getElementById('searchInput');
+    // searchInput.value = playlistName;
+
+    // function filterScreens() {
+    //   const filter = searchInput.value.toLowerCase();
+    //   const rows = document.querySelectorAll('.screen-row');
+    //   rows.forEach(row => {
+    //     const screenName = row.querySelector('.screen-playlistname').textContent.toLowerCase();
+    //     if (screenName.includes(filter)) {
+    //       row.style.display = '';
+    //     } else {
+    //       row.style.display = 'none';
+    //     }
+    //   });
+    // }
+
+    // searchInput.addEventListener('input', filterScreens);
+    // window.addEventListener('load', filterScreens);
+
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkboxes = document.querySelectorAll('input[name="checkbox"]');
+      checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', handleCheckboxChange);
+      });
+    });
+
+    function handleCheckboxChange(event) {
+      const checkbox = event.target;
+      const selectedScreensTable = document.getElementById('selectedScreensTable');
+      if (checkbox.checked) {
+        const newRow = selectedScreensTable.insertRow();
+        newRow.setAttribute('data-screenid', checkbox.value);
+        newRow.innerHTML = `
+          <td>${selectedScreensTable.rows.length}</td>
+          <td>${checkbox.value}</td>
+          <td>${checkbox.getAttribute('data-screenname')}</td>
+           <td>${checkbox.getAttribute('data-address')}</td>
+        `;
+      } else {
+        const rows = selectedScreensTable.rows;
+        for (let i = 0; i < rows.length; i++) {
+          if (rows[i].getAttribute('data-screenid') === checkbox.value) {
+            selectedScreensTable.deleteRow(i);
+            break;
+          }
+        }
+        // Update serial numbers
+        for (let i = 0; i < rows.length; i++) {
+          rows[i].cells[0].innerText = i + 1;
+        }
+      }
+    }
+    function displayLayoutData(data) {
+    for (const [layout, slots] of Object.entries(data)) {
+        const baseSlotNumber = (parseInt(layout) - 1) * 10 + 1; // Calculate the base slot number for each layout
+        console.log(`Layout ${layout}:`);
+        
+        slots.forEach((slot, index) => {
+            const slotNumber = baseSlotNumber + index; // Calculate the actual slot number
+            if (slot) {
+                console.log(`  Slot ${slotNumber}:`);
+                console.log(`   slot${slotNumber}: ${slot.url}`);
+                console.log(`    slot${slotNumber}_updatetime: ${slot.updateTime}`);
+                console.log(`    slot${slotNumber}_deletetime: ${slot.deleteTime}`);
+            } else {
+                console.log(`  Slot ${slotNumber}: Empty`);
+            }
+        });
+    }
+}
+
+
+
+
+// Call the function with the example data
+displayLayoutData(layoutData);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function saveData() {
+    console.log('Save data function called');
+    // Your data saving logic here
+
+    const selectedScreens = [];
+      const checkboxes = document.querySelectorAll('input[name="checkbox"]:checked');
+      checkboxes.forEach((checkbox) => {
+        selectedScreens.push(checkbox.value);
+      });
+
+
+    // Prepare data to be sent
+    const data = {
+      playlistname: playlistName ,
+        playlistdescription: playlistDescription,
+        screen_id: selectedScreens,
+        ...layoutData // Spread the layout-specific data into the object
+    };
+
+    // Send data to server
+    fetch('/Dashboard/Playlist/save-playlist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+
+
+
+
+
+
+  </script>
+</body>
+
+</html>

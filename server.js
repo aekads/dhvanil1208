@@ -503,7 +503,7 @@ const updateResult = await db.query(query1, [now]);
      
     }
 
-
+ console.log('Running a task every minute');
     const maxSlots = 100; // Adjust this to the maximum number of slots
     const conditions = [];
     
@@ -535,7 +535,7 @@ const updateResult = await db.query(query1, [now]);
         }
       }
      }
-    console.log('Running a task every minute');
+   
   } catch (err) {
     console.error('Error during periodic task:', err);
   }

@@ -459,6 +459,7 @@ app.get('/admin/logs', dashboardRoutes.isAuthenticated, async (req, res) => {
 
 cron.schedule('* * * * *', async () => {
   // Runs every minute
+    console.log('Cron job running every minute:', new Date());
   try {
     const now = new Date();
 

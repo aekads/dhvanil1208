@@ -458,31 +458,26 @@ app.get('/admin/logs', dashboardRoutes.isAuthenticated, async (req, res) => {
 });
 
 cron.schedule('* * * * *', async () => {
-  // Every minute
-
+  // Runs every minute
   try {
     const now = new Date();
 
-   
     const maxSlots1 = 100; // Adjust this to the maximum number of slots
-const conditions1 = [];
+    const conditions1 = [];
 
-for (let slot = 1; slot <= maxSlots1; slot++) {
-  conditions1.push(
-    `(slot${slot}_updatetime <= $1 AND slot${slot}_updatetime IS NOT NULL AND slot${slot}_update_status = 'pending')`
-  );
-}
+    for (let slot = 1; slot <= maxSlots1; slot++) {
+      conditions1.push(
+        `(slot${slot}_updatetime <= $1 AND slot${slot}_updatetime IS NOT NULL AND slot${slot}_update_status = 'pending')`
+      );
+    }
 
-const query1 = `
-  SELECT * FROM playlists1235 
-  WHERE ${conditions1.join(' OR ')}
-`;
+    const query1 = `
+      SELECT * FROM playlists1235 
+      WHERE ${conditions1.join(' OR ')}
+    `;
 
-const updateResult = await db.query(query1, [now]);
-console.log('Current timestamp:', now);
-
-
-
+    const updateResult = await db.query(query1, [now]);
+    console.log('Current timestamp:', now);
 
     for (const row of updateResult.rows) {
       // Update slots in screens table based on the update time
@@ -500,42 +495,40 @@ console.log('Current timestamp:', now);
           console.log(`Slot ${slot} data transferred to screens table for playlist ID ${row.id}`);
         }
       }
-     
     }
 
- console.log('Running a task every minute');
+    console.log('Running a task every minute');
+
     const maxSlots = 100; // Adjust this to the maximum number of slots
     const conditions = [];
-    
+
     for (let slot = 1; slot <= maxSlots; slot++) {
       conditions.push(
         `(slot${slot}_deletetime <= $1 AND slot${slot}_deletetime IS NOT NULL AND slot${slot}_delete_status = 'pending')`
       );
     }
-    
+
     const query = `
       SELECT * FROM playlists1235 
       WHERE ${conditions.join(' OR ')}
     `;
-    
-    const deleteResult = await db.query(query, [now]);
-    
 
+    const deleteResult = await db.query(query, [now]);
 
     for (const row of deleteResult.rows) {
       // Delete slots from screens table based on the delete time
       for (let slot = 1; slot <= 100; slot++) {
         const deletetimeField = `slot${slot}_deletetime`;
         const deleteStatusField = `slot${slot}_delete_status`;
-      
+
         if (row[deletetimeField] <= now && row[deletetimeField] !== null && row[deleteStatusField] === 'pending') {
           await db.query(`UPDATE screens SET slot${slot} = NULL WHERE screenid = ANY($1::INTEGER[])`, [row.screen_id]);
           await db.query(`UPDATE playlists1235 SET ${deleteStatusField} = 'completed' WHERE id = $1`, [row.id]);
           console.log(`Slot ${slot} data set to NULL in screens table for playlist ID ${row.id}`);
         }
       }
-     }
-   
+    }
+
   } catch (err) {
     console.error('Error during periodic task:', err);
   }
